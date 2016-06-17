@@ -1,0 +1,23 @@
+[submodule "config-service"]
+	path = config-service
+	url = https://github.com/hecklerm/LOTE_ConfigService.git
+
+[submodule "edge-service"]
+	path = edge-service
+	url = https://github.com/hecklerm/LOTE_EdgeService.git
+
+[submodule "eureka-service"]
+	path = eureka-service
+	url = https://github.com/hecklerm/LOTE_EurekaService.git
+
+[submodule "hystrix-dashboard"]
+	path = hystrix-dashboard
+	url = https://github.com/hecklerm/LOTE_HystrixDashboard.git
+
+[submodule "microservices-config"]
+	path = microservices-config
+	url = https://github.com/hecklerm/LOTE_MicroservicesConfig.git
+
+[submodule "quote-service"]
+	path = quote-service
+	url = https://github.com/hecklerm/LOTE_QuoteService.git
