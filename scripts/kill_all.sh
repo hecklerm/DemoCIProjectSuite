@@ -6,9 +6,8 @@ set -e
 
 echo -e "Killing all apps\n"
 kill_app config-service
+kill_app edge-service
 kill_app eureka-service
 kill_app hystrix-dashboard
-kill_app reservation-client
-kill_app reservation-service
-kill_app zipkin-service
+kill_app quote-service
 docker-compose kill

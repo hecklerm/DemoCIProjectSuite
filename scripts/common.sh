@@ -12,7 +12,6 @@ if [[ -z "${JAVA_HOME}" ]] ; then
 fi
 BUILD_FOLDER="${BUILD_FOLDER:-target}" #target - maven, build - gradle
 PRESENCE_CHECK_URL="${PRESENCE_CHECK_URL:-http://localhost:8761/eureka/apps}"
-TEST_PATH="${TEST_PATH:-reservations/names}"
 HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as host of your docker machine
 RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT}"
@@ -65,6 +64,32 @@ function java_jar() {
     return 0
 }
 
+function build_app() {
+    echo -e "Building app [$1] with options [$2]"
+    cd $1
+    local MVNW_PRESENT="no"
+    ./mvnw --version && MVNW_PRESENT="yes" || echo "You don't have Maven wrapper... will try to run Maven instead"
+    if [[ "${MVNW_PRESENT}" == "yes" ]] ; then
+        ./mvnw clean package -T 6 $2
+    else
+        mvn clean package -T 6 $2
+    fi
+    cd $ROOT_FOLDER
+}
+
+function clean_app() {
+    echo -e "Cleaning app [$1]"
+    cd $1
+    local MVNW_PRESENT="no"
+    ./mvnw --version && MVNW_PRESENT="yes" || echo "You don't have Maven wrapper... will try to run Maven instead"
+    if [[ "${MVNW_PRESENT}" == "yes" ]] ; then
+        ./mvnw clean
+    else
+        mvn clean
+    fi
+    cd $ROOT_FOLDER
+}
+
 # Kills an app with given $1 version
 function kill_app() {
     echo -e "Killing app $1"
@@ -73,52 +98,17 @@ function kill_app() {
     return 0
 }
 
-# Runs H2 from proper folder
 function build_all_apps() {
     ${ROOT_FOLDER}/scripts/build_all.sh
+}
+
+function update_submodules() {
+    ${ROOT_FOLDER}/scripts/setup_repos.sh
 }
 
 # Kill all the apps
 function kill_all_apps() {
     ${ROOT_FOLDER}/scripts/kill_all.sh
-}
-
-# Calls a POST curl to /person to an app on localhost with port $1 on path $2
-function send_test_request() {
-    READY_FOR_TESTS="no"
-    for i in $( seq 1 "${RETRIES}" ); do
-        sleep "${WAIT_TIME}"
-        echo -e "Sending a GET to 127.0.0.1:$1/$2 . This is the response:\n"
-        curl --fail "127.0.0.1:${1}/${2}" && READY_FOR_TESTS="yes" && break
-        echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
-    done
-    if [[ "${READY_FOR_TESTS}" == "yes" ]] ; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# Calls a GET to zipkin to dependencies
-function check_trace() {
-    echo -e "\nChecking if Zipkin has stored the trace"
-    local STRING_TO_FIND="\"parent\":\"reservation-client\",\"child\":\"reservation-service\""
-    local CURRENT_TIME=`python -c 'import time; print int(round(time.time() * 1000))'`
-    local URL_TO_CALL="http://localhost:9411/api/v1/dependencies?endTs=$CURRENT_TIME"
-    READY_FOR_TESTS="no"
-    for i in $( seq 1 "${RETRIES}" ); do
-        sleep "${WAIT_TIME}"
-        echo -e "Sending a GET to $URL_TO_CALL . This is the response:\n"
-        curl --fail "$URL_TO_CALL" | grep $STRING_TO_FIND &&  READY_FOR_TESTS="yes" && break
-        echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
-    done
-    if [[ "${READY_FOR_TESTS}" == "yes" ]] ; then
-        echo -e "\n\nSuccess! Zipkin is working fine!"
-        return 0
-    else
-        echo -e "\n\nFailure...! Zipkin failed to store the trace!"
-        return 1
-    fi
 }
 
 export WAIT_TIME
@@ -132,7 +122,8 @@ export -f build_all_apps
 export -f kill_app
 export -f kill_all_apps
 export -f check_app_presence_in_discovery
-export -f send_test_request
+export -f update_submodules
+export -f build_app
 
 ROOT_FOLDER=`pwd`
 if [[ ! -e "${ROOT_FOLDER}/.git" ]]; then

@@ -6,9 +6,8 @@ ADDITIONAL_MAVEN_OPTS="${ADDITIONAL_MAVEN_OPTS:--Dspring.cloud.release.version=B
 
 set -e
 
-cd $ROOT_FOLDER
-
-echo -e "\nRunning the build with additional options [$ADDITIONAL_MAVEN_OPTS]"
-
-# Packages all apps in parallel using 6 cores
-./mvnw clean package -T 6 $ADDITIONAL_MAVEN_OPTS
+build_app config-service $ADDITIONAL_MAVEN_OPTS
+build_app edge-service $ADDITIONAL_MAVEN_OPTS
+build_app eureka-service $ADDITIONAL_MAVEN_OPTS
+build_app hystrix-dashboard $ADDITIONAL_MAVEN_OPTS
+build_app quote-service $ADDITIONAL_MAVEN_OPTS
